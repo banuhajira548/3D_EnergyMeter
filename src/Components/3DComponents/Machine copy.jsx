@@ -12,7 +12,7 @@ const MachineTooltip = ({ data }) => (
     <div className="space-y-1 mt-2">
       <div className="flex justify-between">
         <span>Power:</span>
-        <span>{data.currentPower} kW</span>
+        <span>{data.Power} kW</span>
       </div>
       <div className="flex justify-between">
         <span>Temperature:</span>
@@ -135,7 +135,7 @@ export const Machine = ({ position, status, data }) => {
             <div className="space-y-2">
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Power:</span>
-                <span className="font-medium">{data.currentPower} kW</span>
+                <span className="font-medium">{data.Power} kW</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-gray-600">Temperature:</span>

@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Form, Input, Button, Checkbox, Card, Typography, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import loginImage from '../assets/login.png'; // Import the image
 import { useNavigate } from 'react-router-dom'; // Import useNavigate
 const { Title, Text } = Typography;
 
@@ -28,10 +27,7 @@ const SignUpPage = () => {
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundImage: `url(${loginImage})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundRepeat: 'no-repeat',
+        backgroundColor: '#f0f2f5', // Replace with your desired background color
         position: 'fixed',
         top: 0,
         left: 0,
@@ -68,7 +64,7 @@ const SignUpPage = () => {
                 name="email"
                 rules={[{ required: true, message: 'Please input your Email!' }]}
               >
-                <Input prefix={<UserOutlined />} placeholder="centralmanufacturing@cmti.res.in" />
+                <Input prefix={<UserOutlined />} placeholder="energymeter@cmti.res.in" />
               </Form.Item>
 
               <Form.Item

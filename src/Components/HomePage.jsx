@@ -3,13 +3,23 @@ import { useNavigate } from 'react-router-dom';
 import { 
   Settings, Power, Battery, Clock, Search, 
   Filter, LayoutGrid, LayoutList, AlertTriangle,
-  Activity, Zap, Timer, ThermometerSun
+  Activity, Zap, Timer, Thermometer, 
+  BatteryCharging, Gauge, TrendingUp, 
+  BarChart2, Cpu, Wrench, AlertCircle,
+  DollarSign, Waves
 } from 'lucide-react';
+import { Card, Tag, Progress, Tooltip, Badge } from 'antd';
 
 const MachineCard = ({ machine, viewMode }) => {
   const navigate = useNavigate();
 
-  const StatusIndicator = ({ status }) => (
+  const getHealthColor = (health) => {
+    if (health >= 90) return 'green';
+    if (health >= 70) return 'orange';
+    return 'red';
+  };
+
+  const StatusIndicator = ({ status, health }) => (
     <div className="flex items-center gap-2">
       <span className={`h-2.5 w-2.5 rounded-full ${
         status === 'active' ? 'bg-green-500 animate-pulse' : 'bg-red-500'
@@ -19,127 +29,180 @@ const MachineCard = ({ machine, viewMode }) => {
       }`}>
         {status === 'active' ? 'Running' : 'Stopped'}
       </span>
+      <Tooltip title="Machine Health">
+        <Tag color={getHealthColor(health)}>{health}% Health</Tag>
+      </Tooltip>
     </div>
   );
 
   if (viewMode === 'list') {
     return (
-      <div 
+      <Card 
+        hoverable
         onClick={() => navigate(`/machine/${machine.id}`)}
-        className="bg-white rounded-lg shadow-md p-4 cursor-pointer hover:shadow-lg transition-all duration-300 flex items-center gap-4"
+        className="cursor-pointer hover:shadow-lg transition-all duration-300"
       >
-        <div className="w-16 h-16 relative">
-          <img 
-            src={machine.image} 
-            alt={machine.name}
-            className="w-full h-full object-cover rounded-lg"
-          />
-          <div className="absolute -top-2 -right-2">
-            <StatusIndicator status={machine.status} />
+        <div className="flex items-center gap-6">
+          <div className="relative w-20 h-20">
+            <img 
+              src={machine.image} 
+              alt={machine.name}
+              className="w-full h-full object-cover rounded-lg"
+            />
           </div>
-        </div>
-        
-        <div className="flex-grow">
-          <h3 className="text-lg font-semibold text-gray-800">{machine.name}</h3>
-          <p className="text-sm text-gray-500">ID: {machine.id}</p>
-        </div>
-
-        <div className="flex gap-8 items-center">
-          <div className="text-center">
-            <div className="flex items-center gap-2 text-blue-600">
-              <Zap size={16} />
-              <span className="font-semibold">{machine.currentPower} kW</span>
+          
+          <div className="flex-grow">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-800">{machine.name}</h3>
+                <p className="text-sm text-gray-500">ID: {machine.id}</p>
+                <StatusIndicator status={machine.status} health={machine.health || 95} />
+              </div>
+              
+              <div className="flex gap-8">
+                <MetricDisplay 
+                  icon={<Zap className="text-blue-500" size={18} />}
+                  value={machine.Power}
+                  unit="kW"
+                  label="Current Power"
+                />
+                <MetricDisplay 
+                  icon={<Battery className="text-purple-500" size={18} />}
+                  value={machine.energyToday}
+                  unit="kWh"
+                  label="Energy Today"
+                />
+                <MetricDisplay 
+                  icon={<Gauge className="text-orange-500" size={18} />}
+                  value={machine.efficiency || 92}
+                  unit="%"
+                  label="Efficiency"
+                />
+              </div>
             </div>
-            <p className="text-xs text-gray-500">Current Power</p>
-          </div>
-
-          <div className="text-center">
-            <div className="flex items-center gap-2 text-purple-600">
-              <Battery size={16} />
-              <span className="font-semibold">{machine.energyToday} kWh</span>
-            </div>
-            <p className="text-xs text-gray-500">Energy Today</p>
-          </div>
-
-          <div className="text-center">
-            <div className="flex items-center gap-2 text-orange-600">
-              <ThermometerSun size={16} />
-              <span className="font-semibold">{machine.temperature}°C</span>
-            </div>
-            <p className="text-xs text-gray-500">Temperature</p>
           </div>
         </div>
-
-        <div className="text-right">
-          <Clock size={14} className="inline mr-1" />
-          <span className="text-sm text-gray-500">{machine.lastUpdated}</span>
-        </div>
-      </div>
+      </Card>
     );
   }
 
   return (
-    <div 
+    <Card 
+      hoverable
       onClick={() => navigate(`/machine/${machine.id}`)}
-      className="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden group"
+      className="h-full cursor-pointer hover:shadow-xl transition-all duration-300"
     >
-      <div className="relative h-48">
+      <div className="relative">
         <img 
           src={machine.image} 
           alt={machine.name}
-          className="w-full h-full object-fill group-hover:scale-105 transition-transform duration-300 cursor-pointer"
+          className="w-full h-48 object-cover rounded-lg mb-4"
         />
         <div className="absolute top-2 right-2">
-          <StatusIndicator status={machine.status} />
+          <StatusIndicator status={machine.status} health={machine.health || 95} />
         </div>
-        {machine.alerts > 0 && (
-          <div className="absolute bottom-2 left-2 bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm flex items-center gap-1">
-            <AlertTriangle size={14} />
-            {machine.alerts} Alerts
-          </div>
-        )}
       </div>
-      
-      <div className="p-6">
-        <div className="flex justify-between items-start mb-4">
+
+      <div className="space-y-4">
+        <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-xl font-bold text-gray-800 mb-1">{machine.name}</h3>
+            <h3 className="text-xl font-bold text-gray-800">{machine.name}</h3>
             <p className="text-sm text-gray-500">ID: {machine.id}</p>
           </div>
-          <Settings size={20} className="text-gray-400 hover:text-gray-600 cursor-pointer" />
-        </div>
-        
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-blue-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-blue-600 mb-1">
-              <Power size={16} />
-              <span className="font-semibold">{machine.currentPower} kW</span>
-            </div>
-            <p className="text-xs text-gray-500">Current Power</p>
-          </div>
-          <div className="bg-purple-50 p-3 rounded-lg">
-            <div className="flex items-center gap-2 text-purple-600 mb-1">
-              <Activity size={16} />
-              <span className="font-semibold">{machine.energyToday} kWh</span>
-            </div>
-            <p className="text-xs text-gray-500">Energy Today</p>
-          </div>
+          <Settings className="text-gray-400 hover:text-gray-600" size={20} />
         </div>
 
-        <div className="flex justify-between items-center text-sm text-gray-500">
-          <div className="flex items-center gap-1">
-            <Timer size={14} />
-            <span>Runtime: {machine.runtime}h</span>
+        {/* <div className="grid grid-cols-2 gap-3">
+          <MetricCard
+            icon={<Zap size={20} />}
+            value={machine.Power}
+            unit="kW"
+            label="Power"
+            bgColor="bg-blue-50"
+            textColor="text-blue-600"
+          />
+          <MetricCard
+            icon={<Battery size={20} />}
+            value={machine.energyToday}
+            unit="kWh"
+            label="Energy"
+            bgColor="bg-purple-50"
+            textColor="text-purple-600"
+          />
+        </div> */}
+
+        {/* <div className="grid grid-cols-2 gap-3">
+          <MetricCard
+            icon={<DollarSign size={20} />}
+            value={machine.costPerHour || "12.5"}
+            unit="$/hr"
+            label="Operating Cost"
+            bgColor="bg-green-50"
+            textColor="text-green-600"
+          />
+          <MetricCard
+            icon={<Waves size={20} />}
+            value={machine.powerFactor || "0.95"}
+            unit="PF"
+            label="Power Quality"
+            bgColor="bg-orange-50"
+            textColor="text-orange-600"
+          />
+        </div> */}
+
+        <div className="pt-2">
+          <div className="flex justify-between text-sm text-gray-600 mb-1">
+            <span>Efficiency</span>
+            <span>{machine.efficiency || 92}%</span>
           </div>
-          <div className="flex items-center gap-1">
-            <Clock size={14} />
-            <span>{machine.lastUpdated}</span>
-          </div>
+          <Progress 
+            percent={machine.efficiency || 92} 
+            strokeColor={{
+              '0%': '#108ee9',
+              '100%': '#87d068',
+            }}
+            showInfo={false}
+          />
+        </div>
+
+        <div className="flex justify-between items-center pt-2">
+          <Tag 
+            icon={<TrendingUp size={14} />}
+            color="blue"
+          >
+            {machine.energyTrend || "+2.3%"} Today
+          </Tag>
+          <Tag 
+            icon={<Wrench size={14} />}
+            color={machine.maintenanceStatus === 'due' ? 'warning' : 'success'}
+          >
+            {machine.maintenanceStatus === 'due' ? 'Maintenance Due' : 'Healthy'}
+          </Tag>
         </div>
       </div>
-    </div>
+    </Card>
   );
 };
+
+const MetricDisplay = ({ icon, value, unit, label }) => (
+  <div className="text-center">
+    <div className="flex items-center gap-1">
+      {icon}
+      <span className="font-semibold">{value} {unit}</span>
+    </div>
+    <p className="text-xs text-gray-500">{label}</p>
+  </div>
+);
+
+const MetricCard = ({ icon, value, unit, label, bgColor, textColor }) => (
+  <div className={`${bgColor} p-3 rounded-lg`}>
+    <div className={`flex items-center gap-2 ${textColor} mb-1`}>
+      {icon}
+      <span className="font-semibold">{value} {unit}</span>
+    </div>
+    <p className="text-sm text-gray-600">{label}</p>
+  </div>
+);
 
 const HomePage = () => {
   const [viewMode, setViewMode] = useState('grid');
@@ -150,51 +213,40 @@ const HomePage = () => {
   const machines = [
     {
       id: 'CNC001',
-      name: 'CNC Machine 1',
+      name: 'Mazak H 100',
       status: 'active',
-      currentPower: 5.2,
+      Power: 5.2,
       energyToday: 42.5,
-      temperature: 35,
-      runtime: 18.5,
-      lastUpdated: '2 min ago',
-      alerts: 2,
+      costPerHour: 12.5,
+      powerFactor: 0.95,
+      energyTrend: '+2.3%',
       image: '/src/assets/machine_1.png'
     },
     {
-        id: 'CNC001',
-        name: 'CNC Machine 1',
+        id: 'CNC002',
+        name: 'HMT Stallion 200',
         status: 'active',
-        currentPower: 5.2,
+        Power: 5.2,
         energyToday: 42.5,
-        temperature: 35,
-        runtime: 18.5,
-        lastUpdated: '2 min ago',
-        alerts: 2,
-        image: 'https://images.unsplash.com/photo-1565434299055-1d0c0b7ce338?ixlib=rb-4.0.3'
+        image: '/src/assets/machine_2.png'
       },
       {
-        id: 'CNC001',
-        name: 'CNC Machine 1',
+        id: 'CNC003',
+        name: 'HMT VTC 800',
         status: 'active',
-        currentPower: 5.2,
+        Power: 5.2,
         energyToday: 42.5,
-        temperature: 35,
-        runtime: 18.5,
-        lastUpdated: '2 min ago',
-        alerts: 2,
-        image: 'https://images.unsplash.com/photo-1565434299055-1d0c0b7ce338?ixlib=rb-4.0.3'
+        image: '/src/assets/machine_3.png'
+
       },
       {
-        id: 'CNC001',
-        name: 'CNC Machine 1',
+        id: 'CNC004',
+        name: 'Schaublin',
         status: 'active',
-        currentPower: 5.2,
+        Power: 5.2,
         energyToday: 42.5,
-        temperature: 35,
-        runtime: 18.5,
-        lastUpdated: '2 min ago',
-        alerts: 2,
-        image: 'https://images.unsplash.com/photo-1565434299055-1d0c0b7ce338?ixlib=rb-4.0.3'
+      image: '/src/assets/machine_3.png'
+
       },
     // Add more machines with similar data structure
   ];
@@ -207,15 +259,15 @@ const HomePage = () => {
   });
 
   return (
-    <div className=" mx-auto px-4 py-8">
-      <div className="bg-white rounded-xl shadow-md p-6 mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-4 mb-6">
+    <div className="mx-auto px-4 py-2">
+      <div className="bg-white rounded-xl shadow-md p-4 mb-4">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-2 mb-4">
           <div>
-            <h1 className="text-3xl font-bold text-gray-800">Machine Overview</h1>
-            <p className="text-gray-500 mt-1">Monitor and manage your CNC machines</p>
+            <h1 className="text-2xl font-bold text-gray-800">Machine Overview</h1>
+            <p className="text-gray-500 text-sm">Monitor and manage your CNC machines</p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
               <input 
@@ -264,11 +316,13 @@ const HomePage = () => {
             </div>
           ) : (
             <div className={viewMode === 'grid' 
-              ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
-              : "flex flex-col gap-4"
+              ? "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
+              : "flex flex-col gap-3"
             }>
               {filteredMachines.map(machine => (
-                <MachineCard key={machine.id} machine={machine} viewMode={viewMode} />
+                <div className="mb-4">
+                  <MachineCard key={machine.id} machine={machine} viewMode={viewMode} />
+                </div>
               ))}
             </div>
           )}

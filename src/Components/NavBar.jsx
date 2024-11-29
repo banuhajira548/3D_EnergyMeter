@@ -15,22 +15,22 @@ const Navbar = () => {
       label: 'Home',
       onClick: () => navigate('/home'),
     },
-    {
-      key: 'addMachine',
-      icon: <PlusCircleOutlined />,
-      label: 'Add Machine',
-      onClick: () => navigate('/add-machine'),
-    },
-    {
-      key: 'notifications',
-      icon: <BellOutlined />,
-      label: 'Notifications',
-    },
-    {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Profile',
-    },
+    // {
+    //   key: 'addMachine',
+    //   icon: <PlusCircleOutlined />,
+    //   label: 'Add Machine',
+    //   onClick: () => navigate('/add-machine'),
+    // },
+    // {
+    //   key: 'notifications',
+    //   icon: <BellOutlined />,
+    //   label: 'Notifications',
+    // },
+    // {
+    //   key: 'profile',
+    //   icon: <UserOutlined />,
+    //   label: 'Profile',
+    // },
     {
         key: 'factoryOverview',
         // icon: <LayoutOutlined />,
@@ -54,7 +54,7 @@ const Navbar = () => {
       }}
     >
       <div className="logo" style={{ fontSize: '20px', fontWeight: 'bold' }}>
-        Energy Monitor
+        Energy Meter
       </div>
       <Menu mode="horizontal" items={menuItems} style={{ border: 'none' }} />
     </Header>
