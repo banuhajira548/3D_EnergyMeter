@@ -32,6 +32,8 @@ import {
   
   InfoIcon
 } from 'lucide-react';
+import { useSensorData } from '../hooks/useSensorData';
+import { endpoints } from './apiEndpoints';
 
 const { RangePicker } = DatePicker;
 
@@ -104,6 +106,8 @@ const MaintenanceRecommendations = ({ recommendations }) => (
 
 const MachineMonitoring = () => {
   const { machineId } = useParams();
+  const numericMachineId = parseInt(machineId);
+  const { sensorData, error, loading } = useSensorData(numericMachineId);
   const [selectedParameter, setSelectedParameter] = useState('Power Factor');
   const [timeRange, setTimeRange] = useState('day');
   const [isOnline, setIsOnline] = useState(true);
@@ -113,21 +117,56 @@ const MachineMonitoring = () => {
   const [predictiveMaintenance, setPredictiveMaintenance] = useState(null);
   
   const parameters = {
-    AveragePowerFactor: { value: 5.2, unit: 'kW', color: '#1890ff', trend: 'up', change: '+2.3%' },
-    PowerFactor1: { value: 5.0, unit: 'kW', color: '#1890ff', trend: 'up', change: '+1.8%' },
-    PowerFactor2: { value: 5.1, unit: 'kW', color: '#1890ff', trend: 'down', change: '-0.5%' },
-    PowerFactor3: { value: 5.3, unit: 'kW', color: '#1890ff', trend: 'up', change: '+3.1%' },
-    TotalCurrent: { value: 12.5, unit: 'A', color: '#52c41a', trend: 'up', change: '+1.2%' },
-    PhaseCurrentIr: { value: 4.0, unit: 'A', color: '#52c41a', trend: 'down', change: '-0.8%' },
-    PhaseCurrentIy: { value: 4.2, unit: 'A', color: '#52c41a', trend: 'up', change: '+2.1%' },
-    PhaseCurrentIb: { value: 4.3, unit: 'A', color: '#52c41a', trend: 'up', change: '+1.5%' },
-    AveragePhaseVoltage: { value: 42.5, unit: 'V', color: '#722ed1', trend: 'up', change: '+0.7%' },
-    PhaseVoltageIr: { value: 42.0, unit: 'V', color: '#722ed1', trend: 'down', change: '-0.3%' },
-    PhaseVoltageIy: { value: 42.2, unit: 'V', color: '#722ed1', trend: 'up', change: '+1.1%' },
-    PhaseVoltageIb: { value: 42.3, unit: 'V', color: '#722ed1', trend: 'up', change: '+0.9%' },
-    Frequency: { value: 49, unit: 'Hz', color: '#fa8c16', trend: 'stable', change: '0%' },
-    Temperature: { value: 45, unit: '°C', color: '#f5222d', trend: 'up', change: '+2.1%' },
-    Efficiency: { value: 92, unit: '%', color: '#13c2c2', trend: 'up', change: '+1.5%' },
+    AveragePowerFactor: { 
+      value: sensorData?.pf_ave?.toFixed(4) || 0, 
+      unit: '', 
+      color: '#1890ff' 
+    },
+    PowerFactor1: { 
+      value: sensorData?.pf_r_phase?.toFixed(4) || 0, 
+      unit: '', 
+      color: '#1890ff' 
+    },
+    PowerFactor2: { 
+      value: sensorData?.pf_y_phase?.toFixed(4) || 0, 
+      unit: '', 
+      color: '#1890ff' 
+    },
+    PowerFactor3: { 
+      value: sensorData?.pf_b_phase?.toFixed(4) || 0, 
+      unit: '', 
+      color: '#1890ff' 
+    },
+    TotalCurrent: { 
+      value: sensorData?.current_total?.toFixed(2) || 0, 
+      unit: 'A', 
+      color: '#52c41a' 
+    },
+    PhaseCurrentIr: { 
+      value: sensorData?.current_r_phase?.toFixed(2) || 0, 
+      unit: 'A', 
+      color: '#52c41a' 
+    },
+    PhaseCurrentIy: { 
+      value: sensorData?.current_y_phase?.toFixed(2) || 0, 
+      unit: 'A', 
+      color: '#52c41a' 
+    },
+    PhaseCurrentIb: { 
+      value: sensorData?.current_b_phase?.toFixed(2) || 0, 
+      unit: 'A', 
+      color: '#52c41a' 
+    },
+    AveragePhaseVoltage: { 
+      value: sensorData?.vln_average?.toFixed(2) || 0, 
+      unit: 'V', 
+      color: '#722ed1' 
+    },
+    Frequency: { 
+      value: sensorData?.frequency?.toFixed(2) || 0, 
+      unit: 'Hz', 
+      color: '#fa8c16' 
+    }
   };
 
   // Machine status card data
@@ -225,7 +264,7 @@ const MachineMonitoring = () => {
     standby: 15,
     operational: 65,
     peak: 20,
-    totalConsumption: 450, // kWh
+    totalConsumption: 695, // kWh
     costPerHour: 12.5, // $/hour
     savings: 8.2, // % compared to last period
   };
@@ -272,7 +311,7 @@ const MachineMonitoring = () => {
   // New section for real-time power quality metrics
   const powerQualityMetrics = {
     harmonicDistortion: 2.3,
-    powerFactor: 0.95,
+    powerFactor: 0.3441,
     voltageImbalance: 1.2,
     frequency: 50.0,
   };
@@ -312,12 +351,6 @@ const MachineMonitoring = () => {
     }
   };
 
-  // Add loading states
-  const [isLoading, setIsLoading] = useState(false);
-
-  // Add error state
-  const [error, setError] = useState(null);
-
   // Add cleanup on unmount
   useEffect(() => {
     let mounted = true;
@@ -328,19 +361,11 @@ const MachineMonitoring = () => {
     };
   }, []);
 
-  // Add error handling for data fetching
+  // Modify the data fetching effect to use the existing error handling
   useEffect(() => {
     const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        setError(null);
-        // Your data fetching logic here
-      } catch (error) {
-        console.error('Error fetching data:', error);
-        setError('Failed to load data');
-      } finally {
-        setIsLoading(false);
-      }
+      if (!machineId) return;
+      // Your additional data fetching logic here if needed
     };
 
     fetchData();
@@ -354,23 +379,23 @@ const MachineMonitoring = () => {
         </div>
       )}
 
-      {isLoading ? (
+      {loading ? (
         <div className="flex justify-center items-center h-64">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       ) : (
         <>
           {/* Machine Header */}
-          <div className="flex justify-between items-center bg-white p-6 rounded-xl shadow-sm">
+          <div className="flex justify-between items-center bg-white p-4 rounded-xl shadow-sm">
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Settings className="h-6 w-6 text-blue-600" />
-                Machine {machineId}
+                {endpoints.machineNames[numericMachineId]}
               </h1>
               <p className="text-gray-500 mt-1">CNC Milling Machine</p>
             </div>
             
-            <div className="flex items-center gap-4">
+            {/* <div className="flex items-center gap-4">
               <Badge 
                 status={isOnline ? "success" : "error"} 
                 text={isOnline ? "Online" : "Offline"} 
@@ -386,34 +411,34 @@ const MachineMonitoring = () => {
                   { value: 'month', label: 'Last Month' }
                 ]}
               />
-            </div>
+            </div> */}
           </div>
 
           {/* Quick Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             <QuickStatCard
-              icon={<Clock className="h-6 w-6 text-blue-600" />}
-              title="Uptime"
-              value={statusData.uptime}
-              subtitle="Total Running Time"
+              icon={<BatteryCharging className="h-6 w-6 text-green-600" />}
+              title="Today's Consumption"
+              value={`${sensorData?.wh_received?.toFixed(2) || 0} Wh`}
+              subtitle="Total Energy Used"
             />
             <QuickStatCard
-              icon={<Gauge className="h-6 w-6 text-green-600" />}
-              title="Efficiency"
-              value={`${statusData.efficiency}%`}
-              subtitle="Overall Equipment Effectiveness"
-            />
-            <QuickStatCard
-              icon={<BatteryCharging className="h-6 w-6 text-purple-600" />}
-              title="Energy Cost"
-              value={`$${calculateEnergyCost(energyBreakdown.totalConsumption, 0.12)}`}
-              subtitle="Today's Consumption Cost"
+              icon={<Gauge className="h-6 w-6 text-blue-600" />}
+              title="Voltage"
+              value={`${sensorData?.va_total?.toFixed(2) || 0} VA`}
+              subtitle="Total Apparent Power"
             />
             <QuickStatCard
               icon={<Zap className="h-6 w-6 text-orange-600" />}
               title="Power Quality"
-              value={`${powerQualityMetrics.powerFactor}`}
+              value={sensorData?.pf_ave?.toFixed(4) || 0}
               subtitle="Power Factor"
+            />
+            <QuickStatCard
+              icon={<BatteryCharging className="h-6 w-6 text-purple-600" />}
+              title="Power Consumption"
+              value={`${sensorData?.watts_total?.toFixed(2) || 0} W`}
+              subtitle="Total Active Power"
             />
           </div>
 
@@ -424,7 +449,31 @@ const MachineMonitoring = () => {
               <Card className="h-full shadow-sm">
                 <div className="flex justify-between items-center mb-6">
                   <h2 className="text-xl font-semibold">Performance Metrics</h2>
-                  <RangePicker className="w-64" />
+                  <div className="flex gap-4">
+                    <Select
+                      style={{ width: 200 }}
+                      value={selectedParameter}
+                      onChange={setSelectedParameter}
+                      options={[
+                        { value: 'Power', label: 'Power' },
+                        { value: 'Energy', label: 'Energy' },
+                        { value: 'AveragePowerFactor', label: 'Average Power Factor' },
+                        { value: 'PowerFactor1', label: 'Power Factor 1' },
+                        { value: 'PowerFactor2', label: 'Power Factor 2' },
+                        { value: 'PowerFactor3', label: 'Power Factor 3' },
+                        { value: 'TotalCurrent', label: 'Average Current' },
+                        { value: 'PhaseCurrentIr', label: 'Phase Current (Ir)' },
+                        { value: 'PhaseCurrentIy', label: 'Phase Current (Iy)' },
+                        { value: 'PhaseCurrentIb', label: 'Phase Current (Ib)' },
+                      ]}
+                    />
+                    <DatePicker 
+                      onChange={(date) => {
+                        // Handle date change
+                        console.log(date);
+                      }} 
+                    />
+                  </div>
                 </div>
                 {renderChart()}
               </Card>
@@ -435,25 +484,20 @@ const MachineMonitoring = () => {
               <Card className="shadow-sm">
                 <h3 className="text-lg font-semibold mb-4">Machine Status</h3>
                 <div className="space-y-4">
-                  <StatusItem
+                  {/* <StatusItem
                     icon={<Activity className="h-5 w-5 text-blue-600" />}
                     label="Current Load"
                     value="78%"
-                  />
+                  /> */}
                   <StatusItem
                     icon={<Power className="h-5 w-5 text-green-600" />}
                     label="Power Consumption"
-                    value="5.2 kW"
+                    value="707 kW"
                   />
                   <StatusItem
-                    icon={<Calendar className="h-5 w-5 text-purple-600" />}
-                    label="Next Maintenance"
-                    value={statusData.nextMaintenance}
-                  />
-                  <StatusItem
-                    icon={<BarChart3 className="h-5 w-5 text-orange-600" />}
-                    label="Production Rate"
-                    value="92 units/hr"
+                    icon={<Gauge className="h-5 w-5 text-orange-600" />}
+                    label="Frequency"
+                    value={`${parameters.Frequency.value}${parameters.Frequency.unit}`}
                   />
                 </div>
               </Card>
@@ -463,14 +507,15 @@ const MachineMonitoring = () => {
                 <div className="text-center">
                   <Progress
                     type="dashboard"
-                    percent={75}
+                    percent={100}
+                    format={() => '694 kWh'}
                     strokeColor={{
                       '0%': '#108ee9',
                       '100%': '#87d068',
                     }}
                     width={180}
                   />
-                  <p className="mt-4 text-gray-600">Current Energy Score</p>
+                  <p className="mt-4 text-gray-600">Total Energy Used</p>
                 </div>
               </Card>
             </div>

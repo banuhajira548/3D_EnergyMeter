@@ -114,7 +114,7 @@ const FactoryOverview = () => {
       status: 'running',
       position: [-12, 0, -12],
       Power: 5.2,
-      temperature: 35,
+      energy: 125.5,
     },
     {
       id: 'CNC002',
@@ -122,7 +122,7 @@ const FactoryOverview = () => {
       status: 'idle',
       position: [0, 0, -12],
       Power: 3.1,
-      temperature: 32,
+      energy: 98.2,
     },
     {
       id: 'CNC003',
@@ -130,7 +130,7 @@ const FactoryOverview = () => {
       status: 'stopped',
       position: [12, 0, -12],
       Power: 0,
-      temperature: 28,
+      energy: 0,
     },
     {
       id: 'CNC004',
@@ -138,7 +138,7 @@ const FactoryOverview = () => {
       status: 'running',
       position: [-12, 0, 0],
       Power: 4.8,
-      temperature: 34,
+      energy: 142.3,
     },
     {
       id: 'CNC005',
@@ -146,7 +146,7 @@ const FactoryOverview = () => {
       status: 'running',
       position: [0, 0, 0],
       Power: 5.5,
-      temperature: 36,
+      energy: 156.8,
     },
     {
       id: 'CNC006',
@@ -154,7 +154,7 @@ const FactoryOverview = () => {
       status: 'idle',
       position: [12, 0, 0],
       Power: 2.1,
-      temperature: 30,
+      energy: 78.4,
     },
   ];
 

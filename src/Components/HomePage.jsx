@@ -9,9 +9,27 @@ import {
   DollarSign, Waves
 } from 'lucide-react';
 import { Card, Tag, Progress, Tooltip, Badge } from 'antd';
+import { endpoints } from './apiEndpoints';
+import { useSensorData } from '../hooks/useSensorData';
 
-const MachineCard = ({ machine, viewMode }) => {
+const MachineCard = ({ machineId, viewMode }) => {
   const navigate = useNavigate();
+  const { sensorData, error, loading } = useSensorData(machineId);
+  
+  if (loading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error}</div>;
+
+  const machine = {
+    id: machineId,
+    name: endpoints.machineNames[machineId],
+    status: 'active',
+    Power: sensorData?.watts_total?.toFixed(2) || 0,
+    energyToday: sensorData?.wh_received?.toFixed(2) || 0,
+    powerFactor: sensorData?.pf_ave?.toFixed(4) || 0,
+    voltage: sensorData?.va_total?.toFixed(2) || 0,
+    frequency: sensorData?.frequency?.toFixed(2) || 0,
+    image: `/src/assets/machine_${machineId}.png`
+  };
 
   const getHealthColor = (health) => {
     if (health >= 90) return 'green';
@@ -39,7 +57,7 @@ const MachineCard = ({ machine, viewMode }) => {
     return (
       <Card 
         hoverable
-        onClick={() => navigate(`/machine/${machine.id}`)}
+        onClick={() => navigate(`/machine/${machineId}`)}
         className="cursor-pointer hover:shadow-lg transition-all duration-300"
       >
         <div className="flex items-center gap-6">
@@ -89,7 +107,7 @@ const MachineCard = ({ machine, viewMode }) => {
   return (
     <Card 
       hoverable
-      onClick={() => navigate(`/machine/${machine.id}`)}
+      onClick={() => navigate(`/machine/${machineId}`)}
       className="h-full cursor-pointer hover:shadow-xl transition-all duration-300"
     >
       <div className="relative">
@@ -112,7 +130,7 @@ const MachineCard = ({ machine, viewMode }) => {
           <Settings className="text-gray-400 hover:text-gray-600" size={20} />
         </div>
 
-        {/* <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 gap-3">
           <MetricCard
             icon={<Zap size={20} />}
             value={machine.Power}
@@ -129,7 +147,7 @@ const MachineCard = ({ machine, viewMode }) => {
             bgColor="bg-purple-50"
             textColor="text-purple-600"
           />
-        </div> */}
+        </div>
 
         {/* <div className="grid grid-cols-2 gap-3">
           <MetricCard
@@ -150,7 +168,7 @@ const MachineCard = ({ machine, viewMode }) => {
           />
         </div> */}
 
-        <div className="pt-2">
+        {/* <div className="pt-2">
           <div className="flex justify-between text-sm text-gray-600 mb-1">
             <span>Efficiency</span>
             <span>{machine.efficiency || 92}%</span>
@@ -163,9 +181,9 @@ const MachineCard = ({ machine, viewMode }) => {
             }}
             showInfo={false}
           />
-        </div>
+        </div> */}
 
-        <div className="flex justify-between items-center pt-2">
+        {/* <div className="flex justify-between items-center pt-2">
           <Tag 
             icon={<TrendingUp size={14} />}
             color="blue"
@@ -178,7 +196,7 @@ const MachineCard = ({ machine, viewMode }) => {
           >
             {machine.maintenanceStatus === 'due' ? 'Maintenance Due' : 'Healthy'}
           </Tag>
-        </div>
+        </div> */}
       </div>
     </Card>
   );
@@ -209,54 +227,8 @@ const HomePage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
 
-  // Enhanced mock data
-  const machines = [
-    {
-      id: 'CNC001',
-      name: 'Mazak H 100',
-      status: 'active',
-      Power: 5.2,
-      energyToday: 42.5,
-      costPerHour: 12.5,
-      powerFactor: 0.95,
-      energyTrend: '+2.3%',
-      image: '/src/assets/machine_1.png'
-    },
-    {
-        id: 'CNC002',
-        name: 'HMT Stallion 200',
-        status: 'active',
-        Power: 5.2,
-        energyToday: 42.5,
-        image: '/src/assets/machine_2.png'
-      },
-      {
-        id: 'CNC003',
-        name: 'HMT VTC 800',
-        status: 'active',
-        Power: 5.2,
-        energyToday: 42.5,
-        image: '/src/assets/machine_3.png'
-
-      },
-      {
-        id: 'CNC004',
-        name: 'Schaublin',
-        status: 'active',
-        Power: 5.2,
-        energyToday: 42.5,
-      image: '/src/assets/machine_3.png'
-
-      },
-    // Add more machines with similar data structure
-  ];
-
-  const filteredMachines = machines.filter(machine => {
-    const matchesSearch = machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         machine.id.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesFilter = filterStatus === 'all' || machine.status === filterStatus;
-    return matchesSearch && matchesFilter;
-  });
+  // Replace mock data with real machine IDs
+  const machines = [1, 2]; // Machine IDs
 
   return (
     <div className="mx-auto px-4 py-2">
@@ -310,7 +282,7 @@ const HomePage = () => {
         </div>
 
         <div className="grid grid-cols-1 gap-6">
-          {filteredMachines.length === 0 ? (
+          {machines.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               No machines found matching your criteria
             </div>
@@ -319,9 +291,9 @@ const HomePage = () => {
               ? "grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6"
               : "flex flex-col gap-3"
             }>
-              {filteredMachines.map(machine => (
-                <div className="mb-4">
-                  <MachineCard key={machine.id} machine={machine} viewMode={viewMode} />
+              {machines.map(machineId => (
+                <div className="mb-4" key={machineId}>
+                  <MachineCard machineId={machineId} viewMode={viewMode} />
                 </div>
               ))}
             </div>
